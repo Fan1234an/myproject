@@ -33,7 +33,7 @@ def DiscussionForum1():
         WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainbox1'))
         )
-        elements = driver.find_elements(By.CLASS_NAME, 'ACG-mainbox2')[:6]  
+        elements = driver.find_elements(By.CLASS_NAME, 'ACG-mainbox1')[:6]  
         WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainbox2B'))
         )
