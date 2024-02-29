@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>您的網頁標題</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+<script src="{{ url_for('static', filename='js/token.js') }}"></script>
+<style>
+  .flash-message {
+      color: red;
+  }
+  .error-message {
+      position: relative;
+  }
+  .error-message p {
+      position: absolute;
+      top: -20px; /* Adjust the position of the error message */
+      color: red;
+      font-size: 14px;
+  }
+</style>
+
+
+<script>
+  function checkPassword() {
+      var password = document.getElementById("password2").value;
+      var confirmPassword = document.getElementById("comfirm_password").value;
+      var errorMessage = document.getElementById("errorMessage");
+  
+      if (password != confirmPassword) {
+          errorMessage.style.display = "block";
+          return false;
+      } else {
+          errorMessage.style.display = "none";
+          return true;
+      }
+  }
+
+  
+</script>
+
+</head>
+<body>
+  <div class="system_name">
+    <h2>○○系統</h2>
+  </div>
+  
+  <div class="login_page">
+    <div id="container1">
+      <div class="login">  
+        <h3>登入 Login</h3>
+        <!--<div id="loginError" class="error-message" style="display:none;">
+          <p>帳號或密碼錯誤</p>
+        </div> -->
+        
+        <form action="/login" method="POST">
+          <input type="text" id="username" name="username" placeholder="帳號" required >
+          <div class="tab"></div>
+          <input type="password" id="password" name="password" placeholder="密碼" required>
+          <div class="tab"></div>
+          <input type="submit" value="登入" class="submit">
+        </form>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <h5 onclick="show_hide()">註冊帳號</h5>
+        <!-- 如果您有一個名為line.png的圖片，您可以在這裡放置它，用於連結 -->
+        <a href="YOUR_LINE_URL" class="line-button">
+          <img src="{{ url_for('static', filename='img/line.png') }}" alt="LINE" style="height: 50px;">
+       </a>
+      </div><!-- login end-->
+    </div><!-- container1 end-->
+  </div><!-- login_page end-->
+  
+  <div class="signup_page">
+    <div id="container2">
+      <div class="signup">  
+        <h3>註冊 Sign Up</h3>
+        <form action = "/reg" method = "post" onsubmit="return checkPassword()">
+          <input type="text" id="fullname" name="fullname" placeholder="使用者名稱" required>
+          <div class="tab"></div>
+          <input type="text" id="username2" name="username" placeholder="帳號" required>
+          <div class="tab"></div>
+          <input type="password" id="password2" name="password" placeholder="密碼" required>
+          <div class="tab"></div>
+          <input type="password" id="comfirm_password" name="comfirm_password" placeholder="確認密碼" required>
+          <p id="errorMessage" style="display: none;">確認密碼與密碼不匹配</p>
+          <div class="tab"></div>
+          <input type="text" id="email" name="email" placeholder="請填寫有效的信箱" required>
+          <div class="tab"></div>            
+          <input type="submit" value="註冊" class="submit">
+        </form>  
+        <h5 onclick="show_hide()">登入帳號</h5>
+      </div><!-- signup end-->
+    </div><!-- container2 end-->
+  </div><!-- signup_page end--> 
+
+  <div id="copyright">
+  </div> 
+  <div id="passwordError" style="display: none;">
+    <!-- Error message for password mismatch. -->
+    Passwords do not match!
+  </div>
+  <script>
+  // Your JavaScript function from the first image goes here
+  </script> 
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>
+

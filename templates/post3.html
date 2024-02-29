@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Media Posting Interface</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<script src="{{ url_for('static', filename='js/tags-input.js') }}"></script>
+</head>
+<body>
+
+<!-- Navbar -->
+
+
+<!-- 表單選項 -->
+<div id="posting-form">
+  <form  id="post-form" action="/submit_post3" method="post">
+    
+    <!-- 標籤區 -->
+    <div id="tags-container">
+      <input type="text" id="tags-input" placeholder="Enter a tag" /> <!-- 用戶輸入標籤的地方 -->
+      <div id="tags-list"></div> <!-- 顯示標籤列表的地方 -->
+      <input type="hidden" name="post_list" id="post_list" value="" /> <!-- 用於表單提交的隱藏 input -->
+    </div>
+    
+    <div class="form-section">
+      <label for="title">標題</label>
+      <input type="text" id="title" name="post_title" maxlength="80" required>
+    </div>
+    <div class="form-section">
+      <label for="description">請留下交友訊息</label>
+      <textarea id="description" name="post_content" placeholder="輸入內容100字以內" required></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">發文</button>
+      <button type="button" class="cancel-btn" onclick="window.history.back();">取消</button>
+    </div>
+  </form>
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>&copy; 2024 Social Media Platform</p>
+</footer>
+
+</body>
+</html>

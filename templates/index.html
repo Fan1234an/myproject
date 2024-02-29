@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宅宅小窩</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='fontawesome/css/all.min.css')}}"> <!-- https://fontawesome.com/ -->
+    <!-- <link rel="stylesheet" href="fontawesome/css/all.min.css"> <! https://fontawesome.com/ > -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400" rel="stylesheet" /> <!-- https://fonts.google.com/ -->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/tooplate-wave-cafe.css')}}">
+    <!-- <link rel="stylesheet" href="css/tooplate-wave-cafe.css"> -->
+<!--
+Tooplate 2121 Wave Cafe
+https://www.tooplate.com/view/2121-wave-cafe
+-->
+</head>
+<body>
+  <div class="tm-container">
+    <div class="tm-row">
+      <!-- Site Header -->
+      <div class="tm-left">
+        <div class="tm-left-inner">
+          <div class="tm-site-header">
+            <i class="fas fa-coffee fa-3x tm-site-logo"></i>
+            <h1 class="tm-site-name">宅宅小窩</h1>
+          </div>
+          <nav class="tm-site-nav">
+            <ul class="tm-site-nav-ul">
+              <li class="tm-page-nav-item">
+                <a href="#drink" class="tm-page-link active">
+                  <i class="fas fa-mug-hot tm-page-link-icon"></i>
+                  <span>總和評論區</span>
+                </a>
+              </li>
+              <li class="tm-page-nav-item">
+                <a href="#about" class="tm-page-link">
+                  <i class="fas fa-users tm-page-link-icon"></i>
+                  <span>介紹區</span>
+                </a>
+              </li>
+              <li class="tm-page-nav-item">
+                <a href="#special" class="tm-page-link">
+                  <i class="fas fa-glass-martini tm-page-link-icon"></i>
+                  <span>遊戲推薦</span>
+                </a>
+              </li>
+              <li class="tm-page-nav-item">
+                <a href="#animation" class="tm-page-link">
+                  <i class="fas fa-comments tm-page-link-icon"></i>
+                  <span>動漫畫推薦</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>        
+      </div>
+      <div class="tm-right">
+        <ul class="tm-site-nav-ul">
+          <!-- ... other navigation items ... -->
+          {% if user_info %}
+          <li class="tm-page-nav-item">
+            <a href="#userinfo" class="tm-page-link">
+              <i class="fas fa-user tm-page-link-icon"></i>
+              <span>{{ user_info.name }}</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+        
+        <main class="tm-main">
+          <div id="drink" class="tm-page-content">
+            <!-- 總和討論區 -->
+            <nav class="tm-black-bg tm-drinks-nav">
+              <ul>
+                <li>
+                  <a href="#" class="tm-tab-link active" data-id="user-content-section">遊戲評論區</a>
+                </li>
+                <li>
+                  <a href="#" class="tm-tab-link active" data-id="animation-content-section">動漫畫評論區</a>
+                </li>
+                <li>
+                  <a href="#" class="tm-tab-link active" data-id="message-content-section">社交留言區</a>
+                </li>
+              </ul>
+            </nav>
+
+            <section id="user-content-section" class="tm-tab-content">
+              <!-- User Post Submission Form -->
+              <div id="post-section">
+                  <div>
+                      <a href="/post" class="text-blue-500" aria-label="Post a comment">發表評論</a>
+                  </div>
+              </div>
+              {% for post in posts %}
+              <article class="tm-list">
+                <div class="tm-list-item">
+                  {% if post.image_data %}
+                  <img src="data:image/jpeg;base64,{{ post.image_data }}" alt="{{ post.title }}" class="tm-list-item-img">
+                  {% endif %}
+                  <div class="tm-black-bg tm-list-item-text">
+                    <h3 class="tm-list-item-name">{{ post.title }} - {{ post.user }}</h3>
+                    <p class="tm-list-item-description">{{ post.content }}</p>
+                    <div class="post-actions">
+                      <div class="tags-container">
+                        {% for tag in post.tags.split(',') %}
+                          <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                      </div>
+                      {% if user_info.name == post.user %}
+                      <form action="{{ url_for('delete_post', post_id=post.id) }}" method="post" class="delete-form">
+                        <button type="submit" onclick="return confirm('確定要刪除這篇帖子嗎？');">刪除</button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </article>
+              {% endfor %}
+            </section>
+          
+            <section id="animation-content-section" class="tm-tab-content">
+              <!-- User Post Submission Form -->
+              <div id="post-section">
+                  <div>
+                      <a href="/post2" class="text-blue-500" aria-label="Post a comment">發表評論</a>
+                  </div>
+              </div>
+              {% for post in posts1 %}
+              <article class="tm-list">
+                <div class="tm-list-item">
+                  {% if post.image_data %}
+                  <img src="data:image/jpeg;base64,{{ post.image_data }}" alt="{{ post.title }}" class="tm-list-item-img">
+                  {% endif %}
+                  <div class="tm-black-bg tm-list-item-text">
+                    <h3 class="tm-list-item-name">{{ post.title }} - {{ post.user }}</h3>
+                    <p class="tm-list-item-description">{{ post.content }}</p>
+                    <div class="post-actions">
+                      <div class="tags-container">
+                        {% for tag in post.tags.split(',') %}
+                          <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                      </div>
+                      {% if user_info.name == post.user %}
+                      <form action="{{ url_for('delete_post1', post_id=post.id) }}" method="post" class="delete-form">
+                        <button type="submit" onclick="return confirm('確定要刪除這篇帖子嗎？');">刪除</button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </article>
+              {% endfor %}
+            </section>
+
+            <section id="message-content-section" class="tm-tab-content">
+              <!-- User Post Submission Form -->
+              <div id="post-section">
+                  <div>
+                      <a href="/post3" class="text-blue-500" aria-label="Post a comment">發表評論</a>
+                  </div>
+              </div>
+              {% for post in posts2 %}
+              <article class="tm-list">
+                <div class="tm-list-item">
+                  <img src="{{ url_for('static', filename='img/hot-americano.png') }}" alt="Hot Americano Coffee" class="tm-list-item-img">
+                  <div class="tm-black-bg tm-list-item-text">
+                    <h3 class="tm-list-item-name">{{ post[2] }} - {{ post[3] }}</h3>
+                    <p class="tm-list-item-description">{{ post[4] }}</p>
+                    <div class="post-actions">
+                      <div class="tags-container">
+                        {% for tag in post[1].split(',') %}
+                          <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                      </div>
+                      {% if user_info.name == post[3] %}
+                      <form action="{{ url_for('delete_post2', post_id=post[0]) }}" method="post" class="delete-form">
+                        <button type="submit" onclick="return confirm('確定要刪除這篇帖子嗎？');">刪除</button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </article>
+              {% endfor %}
+            </section>
+            <!-- end 總和討論區 -->
+          </div>
+            <!-- 用戶資料 -->
+          <div id="userinfo" class="tm-page-content hidden">
+            <h2>User Profile</h2>
+            <p>Name: {{ user_info.name }}</p>
+            <p>Email: {{ user_info.email }}</p>
+            <!-- 登出按鈕 -->
+            <form action="{{ url_for('logout') }}" method="post">
+              <button type="submit" class="logout-button">登出</button>
+            </form>
+            <form action="{{ url_for('delete_account') }}" method="post">
+              <button type="submit" class="delete-account-button" onclick="return confirm(您確定要刪除您的帳戶嗎？ 這不能被撤消。');">註銷帳戶</button>
+            </form>
+          </div>
+          <!-- end 用戶資料 -->
+
+          <!-- 介紹區 -->
+          <div id="about" class="tm-page-content">
+            <div class="tm-black-bg tm-mb-20 tm-about-box-1">              
+              <h2 class="tm-text-primary tm-about-header">介紹宅宅小窩</h2>
+              <div class="tm-list-item tm-list-item-2">                
+                <img src="{{ url_for('static', filename='img/hot-americano.png') }}" alt="Image" class="tm-list-item-img tm-list-item-img-big">
+                <div class="tm-list-item-text-2">
+                  <p>總和評論區內有三個區塊分別是遊戲評論區、動漫畫評論區、社交留言區，評論區為使用者自由發表評論，社交留言區為給使用者發聯絡方式遊戲ID或Line等其他聯絡方式</p>
+                  <p>遊戲推薦、動漫畫推薦各推薦六個並每周更新一次</p>
+                </div>                
+              </div>
+            </div>
+          </div>
+          <!-- end 介紹區 -->
+
+          <!-- 遊戲推薦區 -->
+          <div id="special" class="tm-page-content">
+            <div class="tm-special-items">
+                {% for game in games %}
+                    <div class="tm-black-bg tm-special-item">
+                        <img src="data:image/jpeg;base64,{{ game.data }}" alt="Game Image" class=".tm-special-image">
+                        <div class="tm-special-item-description">
+                            <h2 class="tm-text-primary tm-special-item-title">{{ game.title }}</h2>
+                            <p class="tm-special-item-text">{{ game.score }} {{ game.popularity }}</p>
+                        </div>
+                        <a href="{{ game.url }}" class="tm-special-item-link"></a>
+                    </div>
+                {% endfor %}
+            </div>
+          </div>
+          
+          <!-- end 遊戲推薦區 -->
+
+          <!-- 動漫推薦區 -->
+          <div id="animation" class="tm-page-content">
+            <div class="tm-special-items">
+              {% for animation in animations %}
+                  <div class="tm-black-bg tm-special-item">
+                      <img src="data:image/jpeg;base64,{{ animation.image }}" alt="Game Image" class=".tm-special-image">
+                      <div class="tm-special-item-description">
+                          <h2 class="tm-text-primary tm-special-item-title">{{ animation.title }}</h2>
+                          <p class="tm-special-item-text">{{ animation.score }} {{ animation.popularity }}</p>
+                      </div>
+                      <a href="{{ animation.url }}" class="tm-special-item-link"></a>
+                  </div>
+              {% endfor %}
+          </div>            
+          </div>
+          <!-- end 動漫推薦區 -->
+        </main>
+      </div>    
+    </div>
+    <!--footer class="tm-site-footer">
+      <p class="tm-black-bg tm-footer-text">Copyright 2020 Wave Cafe
+      
+      | Design: <a href="https://www.tooplate.com" class="tm-footer-link" rel="sponsored" target="_parent">Tooplate</a></p>
+    </footer-->
+  </div>
+    
+  <!-- Background video -->
+  <div class="tm-video-wrapper">
+      <i id="tm-video-control-button" class="fas fa-pause"></i>
+      <video autoplay muted loop id="tm-video">
+          <source src="{{url_for('static',filename='video/wave-cafe-video-bg.mp4')}}" type="video/mp4">
+      </video>
+  </div>
+
+  <script src="{{url_for('static',filename='js/jquery-3.4.1.min.js')}}"></script>    
+  <script>
+
+    function setVideoSize() {
+      const vidWidth = 1920;
+      const vidHeight = 1080;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const tempVidWidth = windowHeight * vidWidth / vidHeight;
+      const tempVidHeight = windowWidth * vidHeight / vidWidth;
+      const newVidWidth = tempVidWidth > windowWidth ? tempVidWidth : windowWidth;
+      const newVidHeight = tempVidHeight > windowHeight ? tempVidHeight : windowHeight;
+      const tmVideo = $('#tm-video');
+
+      tmVideo.css('width', newVidWidth);
+      tmVideo.css('height', newVidHeight);
+    }
+
+    function openTab(evt, id) {
+      $('.tm-tab-content').hide();
+      $('#' + id).show();
+      $('.tm-tab-link').removeClass('active');
+      $(evt.currentTarget).addClass('active');
+    }    
+
+    function initPage() {
+      let pageId = location.hash;
+
+      if(pageId) {
+        highlightMenu($(`.tm-page-link[href^="${pageId}"]`)); 
+        showPage($(pageId));
+      }
+      else {
+        pageId = $('.tm-page-link.active').attr('href');
+        showPage($(pageId));
+      }
+    }
+
+    function highlightMenu(menuItem) {
+      $('.tm-page-link').removeClass('active');
+      menuItem.addClass('active');
+    }
+
+    function showPage(page) {
+      $('.tm-page-content').hide();
+      page.show();
+    }
+
+    $(document).ready(function(){
+
+      /***************** Pages *****************/
+
+      initPage();
+
+      $('.tm-page-link').click(function(event) {
+        
+        if(window.innerWidth > 991) {
+          event.preventDefault();
+        }
+
+        highlightMenu($(event.currentTarget));
+        showPage($(event.currentTarget.hash));
+      });
+
+      
+      /***************** Tabs *******************/
+
+      $('.tm-tab-link').on('click', e => {
+        e.preventDefault(); 
+        openTab(e, $(e.target).data('id'));
+      });
+
+      $('.tm-tab-link.active').click(); // Open default tab
+
+
+      /************** Video background *********/
+
+      setVideoSize();
+
+      // Set video background size based on window size
+      let timeout;
+      window.onresize = function(){
+        clearTimeout(timeout);
+        timeout = setTimeout(setVideoSize, 100);
+      };
+
+      // Play/Pause button for video background      
+      const btn = $("#tm-video-control-button");
+
+      btn.on("click", function(e) {
+        const video = document.getElementById("tm-video");
+        $(this).removeClass();
+
+        if (video.paused) {
+          video.play();
+          $(this).addClass("fas fa-pause");
+        } else {
+          video.pause();
+          $(this).addClass("fas fa-play");
+        }
+      });
+    });
+      
+  </script>
+</body>
+</html>

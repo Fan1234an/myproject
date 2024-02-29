@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>您的網頁標題</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login.css') }}">
+</head>
+<body>
+  
+  <html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Flask HTTP請求方法處理</title>
+</head>
+   <body>
+      <form action="{{ url_for('resend_confirmation') }}" method="post">
+         <input type="email" name="email" placeholder="輸入您的信箱" required>
+         <input type="submit" value="重新發送">
+     </form>
+
+   </body>
+</html>
+</body>
+</html>
