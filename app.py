@@ -138,7 +138,7 @@ def submit_post2():
                 # 将图片数据和其他表单数据一起插入 user_activities 表中
                 conn=get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("INSERT INTO animation_activities (forum, tags, user, title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
+                cursor.execute("INSERT INTO animation_activities (forum, tags, \"user\", title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
                                 (forum, tags, name, title, content, image_data[0]))
                 conn.commit()
                 cursor.close()
@@ -481,8 +481,8 @@ def delete_account():
         username = session['user_info']['username']
         conn=get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM lccnet WHERE user=%s", (username,))
-        cursor.execute("DELETE FROM email_tokens WHERE user=%s", (username,))
+        cursor.execute("DELETE FROM lccnet WHERE \"user\"=%s", (username,))
+        cursor.execute("DELETE FROM email_tokens WHERE \"user\"=%s", (username,))
         conn.commit()
         cursor.close()
         conn.close()
