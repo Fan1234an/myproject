@@ -267,7 +267,7 @@ def initialize_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS lccnet (
         id SERIAL PRIMARY KEY,
-        user TEXT NOT NULL UNIQUE,
+        "user" TEXT NOT NULL UNIQUE,
         passwd TEXT NOT NULL,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
@@ -277,7 +277,7 @@ def initialize_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS email_tokens (
         id SERIAL PRIMARY KEY,
-        user TEXT NOT NULL,
+        "user" TEXT NOT NULL,
         token TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -287,12 +287,12 @@ def initialize_db():
         id SERIAL PRIMARY KEY,
         forum TEXT NOT NULL,
         tags TEXT NOT NULL,
-        user TEXT NOT NULL,
+        "user" TEXT NOT NULL,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         image_data BYTEA,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user) REFERENCES lccnet(user)
+        FOREIGN KEY("user") REFERENCES lccnet("user")
     )
     ''')
     cursor.execute('''
@@ -300,23 +300,23 @@ def initialize_db():
         id SERIAL PRIMARY KEY,
         forum TEXT NOT NULL,
         tags TEXT NOT NULL,
-        user TEXT NOT NULL,
+        "user" TEXT NOT NULL,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         image_data BYTEA,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user) REFERENCES lccnet(user)
+        FOREIGN KEY("user") REFERENCES lccnet("user")
     )
     ''')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS message_activities (
         id SERIAL PRIMARY KEY,
         tags TEXT NOT NULL,
-        user TEXT NOT NULL,
+        "user" TEXT NOT NULL,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user) REFERENCES lccnet(user)
+        FOREIGN KEY("user") REFERENCES lccnet("user")
     )
     ''')
     conn.commit()
