@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import requests
 from selenium.webdriver.chrome.service import Service
+from app import get_db_connection
 chrome_options = webdriver.ChromeOptions()
 chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 chrome_options.add_argument("--headless") #無頭模式
@@ -116,17 +117,17 @@ def Score_Popularity_ACG():
     return Scores,popularity
 
 def save_to_database(data):
-    conn = sqlite3.connect('images.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS acg_info (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         title TEXT,
         url TEXT,
         score TEXT,
         popularity TEXT,
-        image BLOB
+        image BYTEA
     )
     ''')
 
@@ -136,10 +137,11 @@ def save_to_database(data):
         # 將圖片二進位數據插入到數據庫
         cursor.execute('''
         INSERT INTO acg_info (title, url, score, popularity, image) 
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
         ''', (title, url, score, popularity, image_data))
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 def maina():

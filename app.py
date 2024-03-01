@@ -37,20 +37,51 @@ scheduler.add_job(job_function, 'interval', days=7)
 scheduler.start()
 job_function() # 開發測試用
 
+def get_db_connection():
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    urlparse.uses_netloc.append("postgres")
+    url = urlparse.urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    return conn
+
+def execute_query(query):
+    results = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+    except Exception as e:
+        print(f"發生錯誤： {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    return results
+
 @app.route("/post")
 def newpost():
-    with sqlite3.connect('images.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, title, data FROM images ORDER BY id DESC")
-        images_info = cursor.fetchall()
+    conn=get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, title, data FROM images ORDER BY id DESC")
+    images_info = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return render_template('post.html',images_info=images_info)
 
 @app.route("/post2")
 def newpost2():
-    with sqlite3.connect('images.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, title, image FROM acg_info ORDER BY id DESC")
-        images_info1 = cursor.fetchall()
+    conn=get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, title, image FROM acg_info ORDER BY id DESC")
+    images_info1 = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return render_template('post2.html',images_info1=images_info1)
 
 @app.route("/post3")
@@ -67,19 +98,22 @@ def submit_post():
             title = request.form['post_title']
             content = request.form['post_content']
             # 从 images 表中获取选择的图片数据
-            with sqlite3.connect('images.db') as conn:
-                cursor = conn.cursor()
-                # 根据图片ID查询数据
-                cursor.execute("SELECT data FROM images WHERE id = ?", (forum,))
-                image_data = cursor.fetchone()
+            conn=get_db_connection()
+            cursor = conn.cursor()
+            # 根据图片ID查询数据
+            cursor.execute("SELECT data FROM images WHERE id = ?", (forum,))
+            image_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
             if image_data:
                 # 将图片数据和其他表单数据一起插入 user_activities 表中
-                with sqlite3.connect('account.db') as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO user_activities (forum, tags, user, title, content, image_data) VALUES (?, ?, ?, ?, ?, ?)", 
-                                   (forum, tags, name, title, content, image_data[0]))
-                    conn.commit()
-
+                conn=get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO user_activities (forum, tags, user, title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
+                                (forum, tags, name, title, content, image_data[0]))
+                conn.commit()
+                cursor.close()
+                conn.close()
             flash('Post submitted successfully!')
             return redirect(url_for('home'))
         
@@ -93,18 +127,22 @@ def submit_post2():
             title = request.form['post_title']
             content = request.form['post_content']
             # 从 images 表中获取选择的图片数据
-            with sqlite3.connect('images.db') as conn:
-                cursor = conn.cursor()
-                # 根据图片ID查询数据
-                cursor.execute("SELECT image FROM acg_info WHERE id = ?", (forum,))
-                image_data = cursor.fetchone()
+            conn=get_db_connection()
+            cursor = conn.cursor()
+            # 根据图片ID查询数据
+            cursor.execute("SELECT image FROM acg_info WHERE id = %s", (forum,))
+            image_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
             if image_data:
                 # 将图片数据和其他表单数据一起插入 user_activities 表中
-                with sqlite3.connect('account.db') as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO animation_activities (forum, tags, user, title, content, image_data) VALUES (?, ?, ?, ?, ?, ?)", 
-                                   (forum, tags, name, title, content, image_data[0]))
-                    conn.commit()
+                conn=get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO animation_activities (forum, tags, user, title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
+                                (forum, tags, name, title, content, image_data[0]))
+                conn.commit()
+                cursor.close()
+                conn.close()
             flash('Post submitted successfully!')
             return redirect(url_for('home'))
 
@@ -116,48 +154,56 @@ def submit_post3():
             tags = request.form['post_list']
             title = request.form['post_title']
             content = request.form['post_content']
-            with sqlite3.connect('account.db') as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO message_activities ( tags, user, title, content) VALUES ( ?, ?, ?, ?)", ( tags, name, title, content))
-                    conn.commit()
+            conn=get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO message_activities ( tags, user, title, content) VALUES ( %s, %s, %s, %s)", ( tags, name, title, content))
+            conn.commit()
+            cursor.close()
+            conn.close()
         flash('Post submitted successfully!')
         return redirect(url_for('home'))
 
 # 刪除貼文
 @app.route('/delete_post/<int:post_id>', methods=['POST'])
 def delete_post(post_id):
-    with sqlite3.connect('account.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM user_activities WHERE id = ?", (post_id,))
-        conn.commit()
-        flash("貼文刪除成功！")
-        return redirect(url_for('home'))
+    conn=get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM user_activities WHERE id = %s", (post_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    flash("貼文刪除成功！")
+    return redirect(url_for('home'))
 @app.route('/delete_post1/<int:post_id>', methods=['POST'])
 def delete_post1(post_id):
-    with sqlite3.connect('account.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM animation_activities WHERE id = ?", (post_id,))
-        conn.commit()
-        flash("貼文刪除成功！")
-        return redirect(url_for('home'))
+    conn=get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM animation_activities WHERE id = %s", (post_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    flash("貼文刪除成功！")
+    return redirect(url_for('home'))
 @app.route('/delete_post2/<int:post_id>', methods=['POST'])
 def delete_post2(post_id):
-    with sqlite3.connect('account.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM message_activities WHERE id = ?", (post_id,))
-        conn.commit()
-        flash("貼文刪除成功！")
-        return redirect(url_for('home'))
+    conn=get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM message_activities WHERE id = %s", (post_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    flash("貼文刪除成功！")
+    return redirect(url_for('home'))
     
 @app.route("/home")
 def home():
     if "user_info" in session:
         user_info = session['user_info']
         
-        with sqlite3.connect('account.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, forum, tags, title, user, content, image_data FROM user_activities ORDER BY id DESC")
-            posts = [{
+        # 執行查詢並處理結果
+        results = execute_query("SELECT id, forum, tags, title, user, content, image_data FROM user_activities ORDER BY id DESC")
+        posts = [
+            {
                 'id': row[0],
                 'forum': row[1],
                 'tags': row[2],
@@ -165,50 +211,60 @@ def home():
                 'user': row[4],
                 'content': row[5],
                 'image_data': base64.b64encode(row[6]).decode('ascii') if row[6] else None
-            } for row in cursor.fetchall()]
-            
-        with sqlite3.connect('account.db') as conn:
-            cursor1 = conn.cursor()
-            cursor1.execute("SELECT id, forum, tags, title, user, content, image_data FROM animation_activities ORDER BY id DESC")
-            posts1 = [{
-                'id': row[0],
-                'forum': row[1],
-                'tags': row[2],
-                'title': row[3],
-                'user': row[4],
-                'content': row[5],
-                'image_data': base64.b64encode(row[6]).decode('ascii') if row[6] else None
-            } for row in cursor1.fetchall()]
+            } for row in results
+        ] if results is not None else []
 
-        with sqlite3.connect('account.db') as conn:
-            cursor2 = conn.cursor()
-            cursor2.execute("SELECT id, tags, title, user, content FROM message_activities ORDER BY id DESC")
-            posts2 = cursor2.fetchall()
-            
-        with sqlite3.connect('images.db') as conn:
-            games = conn.cursor()
-            games.execute("SELECT title, url, score, popularity, data FROM images ORDER BY id DESC")
-            games = [{
+        results1 = execute_query("SELECT id, forum, tags, title, user, content, image_data FROM animation_activities ORDER BY id DESC")
+        posts1 = [
+            {
+                'id': row[0],
+                'forum': row[1],
+                'tags': row[2],
+                'title': row[3],
+                'user': row[4],
+                'content': row[5],
+                'image_data': base64.b64encode(row[6]).decode('ascii') if row[6] else None
+            } for row in results1
+        ] if results1 is not None else []
+
+        results2 = execute_query("SELECT id, tags, title, user, content FROM message_activities ORDER BY id DESC")
+        posts2 = [
+            {
+                'id': row[0],
+                'tags': row[1],
+                'title': row[2],
+                'user': row[3],
+                'content': row[4],
+            } for row in results2
+        ] if results2 is not None else []
+
+        games_results = execute_query("SELECT title, url, score, popularity, data FROM images ORDER BY id DESC")
+        games = [
+            {
                 'title': row[0],
                 'url': row[1],
                 'score': row[2],
                 'popularity': row[3],
                 'data': base64.b64encode(row[4]).decode('ascii') if row[4] else None
-            } for row in games.fetchall()]
-        
-        with sqlite3.connect('images.db') as conn:
-            animations = conn.cursor()
-            animations.execute("SELECT title, url, score, popularity, image FROM acg_info ORDER BY id DESC")
-            animations = [{
+            } for row in games_results
+        ] if games_results is not None else []
+
+        animations_results = execute_query("SELECT title, url, score, popularity, image FROM acg_info ORDER BY id DESC")
+        animations = [
+            {
                 'title': row[0],
                 'url': row[1],
                 'score': row[2],
                 'popularity': row[3],
                 'image': base64.b64encode(row[4]).decode('ascii') if row[4] else None
-            } for row in animations.fetchall()]
+            } for row in animations_results
+        ] if animations_results is not None else []
+
+        # 使用處理好的數據渲染模板
         return render_template('index.html', user_info=user_info, posts=posts, posts1=posts1, posts2=posts2, games=games, animations=animations)
     else:
         return redirect("/login")
+
 
 @app.route("/")
 def signup():
@@ -224,12 +280,13 @@ def login():
         user = request.form['username']
         passwd = request.form['password']
         
-        with sqlite3.connect('account.db') as conn:
-            cursor = conn.cursor()
-            # 從資料庫檢索密碼、姓名、電子郵件和確認狀態
-            cursor.execute("SELECT passwd, name, email, confirmed FROM lccnet WHERE user=?", (user,))
-            data = cursor.fetchone()
-        
+        conn=get_db_connection()
+        cursor = conn.cursor()
+        # 從資料庫檢索密碼、姓名、電子郵件和確認狀態
+        cursor.execute("SELECT passwd, name, email, confirmed FROM lccnet WHERE user=%s", (user,))
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
         if data is None:
             flash("帳號不存在")
             return redirect(url_for('login'))
@@ -321,6 +378,7 @@ def initialize_db():
     ''')
     conn.commit()
     cursor.close()
+    conn.close()
 initialize_db()
 
 @app.route('/reg', methods=['POST', 'GET'])
@@ -335,12 +393,13 @@ def reg():
             link = url_for('confirm_email', token=token, _external=True)
             send_email(email, '確認您的電子郵件', '請點擊連結確認您的電子郵件: ' + link)
             
-            with sqlite3.connect('account.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO lccnet (user, passwd, name, email) VALUES (?, ?, ?, ?)", (user, passwd, name, email))
-                cursor.execute("INSERT INTO email_tokens (user, token) VALUES (?, ?)", (user, token))
-                conn.commit()
-
+            conn=get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO lccnet (user, passwd, name, email) VALUES (%s, %s, %s, %s)", (user, passwd, name, email))
+            cursor.execute("INSERT INTO email_tokens (user, token) VALUES (%s, %s)", (user, token))
+            conn.commit()
+            cursor.close()
+            conn.close()
             return "註冊成功，請前往信箱驗證<b><a href = '/login'>點選這裡登錄</a></b>"
         except sqlite3.IntegrityError:
             return "註冊失敗帳號已存在"
@@ -375,17 +434,19 @@ def confirm_email(token):
     except BadSignature:
         flash("確認連結無效。")
         return redirect(url_for('signup'))
-    with sqlite3.connect('account.db') as conn:
-        cursor = conn.cursor()
+    conn=get_db_connection()
+    cursor = conn.cursor()
         # 檢查電子郵件是否已確認
-        cursor.execute("SELECT confirmed FROM lccnet WHERE email=?", (email,))
-        user = cursor.fetchone()
-        if user and user[0]:
-            flash("以確認")
-            return redirect(url_for('login'))
-        # 更新用戶的確認狀態
-        cursor.execute("UPDATE lccnet SET confirmed = 1 WHERE email=?", (email,))
-        conn.commit()
+    cursor.execute("SELECT confirmed FROM lccnet WHERE email=%s", (email,))
+    user = cursor.fetchone()
+    if user and user[0]:
+        flash("以確認")
+        return redirect(url_for('login'))
+        # 更新用戶的確認狀態  
+    cursor.execute("UPDATE lccnet SET confirmed = 1 WHERE email=%s", (email,))
+    conn.commit()
+    cursor.close()
+    conn.close()
     flash("已通過驗證")
     return redirect(url_for('login'))
 
@@ -399,11 +460,13 @@ def logout():
 def delete_account():
     if 'user_info' in session:
         username = session['user_info']['username']
-        with sqlite3.connect('account.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM lccnet WHERE user=?", (username,))
-            cursor.execute("DELETE FROM email_tokens WHERE user=?", (username,))
-            conn.commit()
+        conn=get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM lccnet WHERE user=%s", (username,))
+        cursor.execute("DELETE FROM email_tokens WHERE user=%s", (username,))
+        conn.commit()
+        cursor.close()
+        conn.close()
         session.clear()  
         flash('您的帳戶已成功刪除。')
     else:

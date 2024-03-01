@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import requests
 from selenium.webdriver.chrome.service import Service
+from app import get_db_connection
 chrome_options = webdriver.ChromeOptions()
 chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 chrome_options.add_argument("--headless") #無頭模式
@@ -100,18 +101,18 @@ def Score_Popularity_Switch():
 # 儲存資料到資料庫
 def save_to_database(data):
     # 建立或打開資料庫
-    conn = sqlite3.connect('images.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     # 建立資料表
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS images (
-        id INTEGER PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         title TEXT,
         url TEXT,
         score TEXT,
         popularity TEXT,
-        data BLOB
+        data BYTEA
     )
     ''')
 
@@ -122,12 +123,13 @@ def save_to_database(data):
     for title, url, image_path, score, popularity in data:
         with open(image_path, 'rb') as file:
             image_data = file.read()
-            cursor.execute('INSERT INTO images (title, url, score, popularity, data) VALUES (?, ?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO images (title, url, score, popularity, data) VALUES (%s, %s, %s, %s, %s)', 
                            (title, url, score, popularity, image_data))
     # 提交變更並關閉資料庫連接
     conn.commit()
+    cursor.close()
     conn.close()
-
+    
 def main():
     data = DiscussionForum1()
     save_to_database(data)
