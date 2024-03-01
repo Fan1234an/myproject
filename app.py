@@ -28,14 +28,14 @@ def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
     mail.send(msg)
 
-# def job_function():
-#     with app.app_context():
-#         main()
-#         maina()
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(job_function, 'interval', days=7)
-# scheduler.start()
-# job_function() # 開發測試用
+def job_function():
+    with app.app_context():
+        main()
+        maina()
+scheduler = BackgroundScheduler()
+scheduler.add_job(job_function, 'interval', days=7)
+scheduler.start()
+job_function() # 開發測試用
 
 def get_db_connection():
     DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -109,7 +109,7 @@ def submit_post():
                 # 将图片数据和其他表单数据一起插入 user_activities 表中
                 conn=get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("INSERT INTO user_activities (forum, tags, user, title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
+                cursor.execute("INSERT INTO user_activities (forum, tags, \"user\", title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
                                 (forum, tags, name, title, content, image_data[0]))
                 conn.commit()
                 cursor.close()
@@ -138,7 +138,7 @@ def submit_post2():
                 # 将图片数据和其他表单数据一起插入 user_activities 表中
                 conn=get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("INSERT INTO animation_activities (forum, tags, user, title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
+                cursor.execute("INSERT INTO animation_activities (forum, tags, \"user\", title, content, image_data) VALUES (%s, %s, %s, %s, %s, %s)", 
                                 (forum, tags, name, title, content, image_data[0]))
                 conn.commit()
                 cursor.close()
@@ -156,7 +156,7 @@ def submit_post3():
             content = request.form['post_content']
             conn=get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO message_activities ( tags, user, title, content) VALUES ( %s, %s, %s, %s)", ( tags, name, title, content))
+            cursor.execute("INSERT INTO message_activities ( tags, \"user\", title, content) VALUES ( %s, %s, %s, %s)", ( tags, name, title, content))
             conn.commit()
             cursor.close()
             conn.close()
@@ -201,7 +201,7 @@ def home():
         user_info = session['user_info']
         
         # 執行查詢並處理結果
-        results = execute_query("SELECT id, forum, tags, title, user, content, image_data FROM user_activities ORDER BY id DESC")
+        results = execute_query("SELECT id, forum, tags, title, \"user\", content, image_data FROM user_activities ORDER BY id DESC")
         posts = [
             {
                 'id': row[0],
@@ -214,7 +214,7 @@ def home():
             } for row in results
         ] if results is not None else []
 
-        results1 = execute_query("SELECT id, forum, tags, title, user, content, image_data FROM animation_activities ORDER BY id DESC")
+        results1 = execute_query("SELECT id, forum, tags, title, \"user\", content, image_data FROM animation_activities ORDER BY id DESC")
         posts1 = [
             {
                 'id': row[0],
@@ -227,7 +227,7 @@ def home():
             } for row in results1
         ] if results1 is not None else []
 
-        results2 = execute_query("SELECT id, tags, title, user, content FROM message_activities ORDER BY id DESC")
+        results2 = execute_query("SELECT id, tags, title, \"user\", content FROM message_activities ORDER BY id DESC")
         posts2 = [
             {
                 'id': row[0],
@@ -500,5 +500,5 @@ if __name__ == '__main__':
         pass
     finally:
         # 當 Flask 應用退出時，關閉調度器
-        pass
-        # scheduler.shutdown()
+        
+        scheduler.shutdown()
