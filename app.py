@@ -376,6 +376,26 @@ def initialize_db():
         FOREIGN KEY("user") REFERENCES lccnet("user")
     )
     ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS images (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        score TEXT,
+        popularity TEXT,
+        data BYTEA
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS acg_info (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        score TEXT,
+        popularity TEXT,
+        image BYTEA
+    )
+    ''')
     conn.commit()
     cursor.close()
     conn.close()

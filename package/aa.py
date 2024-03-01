@@ -6,7 +6,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import requests
 from selenium.webdriver.chrome.service import Service
-from app import get_db_connection
+import psycopg2
+import urllib.parse as urlparse
 chrome_options = webdriver.ChromeOptions()
 chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 chrome_options.add_argument("--headless") #無頭模式
@@ -100,22 +101,17 @@ def Score_Popularity_Switch():
 
 # 儲存資料到資料庫
 def save_to_database(data):
-    # 建立或打開資料庫
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # 建立資料表
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS images (
-        id SERIAL PRIMARY KEY,
-        title TEXT,
-        url TEXT,
-        score TEXT,
-        popularity TEXT,
-        data BYTEA
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    urlparse.uses_netloc.append("postgres")
+    url = urlparse.urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
     )
-    ''')
-
+    cursor = conn.cursor()
     # 清空现有数据
     cursor.execute('DELETE FROM images')
 
