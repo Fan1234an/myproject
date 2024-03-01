@@ -283,7 +283,7 @@ def login():
         conn=get_db_connection()
         cursor = conn.cursor()
         # 從資料庫檢索密碼、姓名、電子郵件和確認狀態
-        cursor.execute("SELECT passwd, name, email, confirmed FROM lccnet WHERE user=%s", (user,))
+        cursor.execute("SELECT passwd, name, email, confirmed FROM lccnet WHERE \"user\"=%s", (user,))
         data = cursor.fetchone()
         cursor.close()
         conn.close()
