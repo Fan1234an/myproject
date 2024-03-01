@@ -414,8 +414,8 @@ def reg():
             
             conn=get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO lccnet (user, passwd, name, email) VALUES (%s, %s, %s, %s)", (user, passwd, name, email))
-            cursor.execute("INSERT INTO email_tokens (user, token) VALUES (%s, %s)", (user, token))
+            cursor.execute("INSERT INTO lccnet (\"user\", passwd, name, email) VALUES (%s, %s, %s, %s)", (user, passwd, name, email))
+            cursor.execute("INSERT INTO email_tokens (\"user\", token) VALUES (%s, %s)", (user, token))
             conn.commit()
             cursor.close()
             conn.close()
