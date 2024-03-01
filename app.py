@@ -68,7 +68,7 @@ def initialize_db():
         content TEXT NOT NULL,
         image_data BYTEA,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY("user") REFERENCES lccnet("user")
+        FOREIGN KEY("user") REFERENCES lccnet(user)
     )
     ''')
     cursor.execute('''
@@ -81,7 +81,7 @@ def initialize_db():
         content TEXT NOT NULL,
         image_data BYTEA,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY("user") REFERENCES lccnet("name")
+        FOREIGN KEY("user") REFERENCES lccnet(name)
     )
     ''')
     cursor.execute('''
