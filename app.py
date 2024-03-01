@@ -28,14 +28,105 @@ def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
     mail.send(msg)
 
-# def job_function():
-#     with app.app_context():
-#         main()
-#         maina()
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(job_function, 'interval', days=7)
-# scheduler.start()
-# job_function() # 開發測試用
+def initialize_db():
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    urlparse.uses_netloc.append("postgres")
+    url = urlparse.urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS lccnet (
+        id SERIAL PRIMARY KEY,
+        "user" TEXT NOT NULL UNIQUE,
+        passwd TEXT NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        confirmed INTEGER DEFAULT 0
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS email_tokens (
+        id SERIAL PRIMARY KEY,
+        "user" TEXT NOT NULL,
+        token TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS user_activities (
+        id SERIAL PRIMARY KEY,
+        forum TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        "user" TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_data BYTEA,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY("user") REFERENCES lccnet("user")
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS animation_activities (
+        id SERIAL PRIMARY KEY,
+        forum TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        "user" TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_data BYTEA,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY("user") REFERENCES lccnet("name")
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS message_activities (
+        id SERIAL PRIMARY KEY,
+        tags TEXT NOT NULL,
+        "user" TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY("user") REFERENCES lccnet("user")
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS images (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        score TEXT,
+        popularity TEXT,
+        data BYTEA
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS acg_info (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        score TEXT,
+        popularity TEXT,
+        image BYTEA
+    )
+    ''')
+    conn.commit()
+    conn.close()
+initialize_db()
+
+def job_function():
+    with app.app_context():
+        main()
+        maina()
+scheduler = BackgroundScheduler()
+scheduler.add_job(job_function, 'interval', days=7)
+scheduler.start()
+job_function() # 開發測試用
 
 def get_db_connection():
     DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -309,96 +400,7 @@ def login():
     else:
         return render_template('signin.html')
 
-def initialize_db():
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    urlparse.uses_netloc.append("postgres")
-    url = urlparse.urlparse(DATABASE_URL)
-    conn = psycopg2.connect(
-        database=url.path[1:],
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port
-    )
-    cursor = conn.cursor()
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS lccnet (
-        id SERIAL PRIMARY KEY,
-        "user" TEXT NOT NULL UNIQUE,
-        passwd TEXT NOT NULL,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        confirmed INTEGER DEFAULT 0
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS email_tokens (
-        id SERIAL PRIMARY KEY,
-        "user" TEXT NOT NULL,
-        token TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS user_activities (
-        id SERIAL PRIMARY KEY,
-        forum TEXT NOT NULL,
-        tags TEXT NOT NULL,
-        "user" TEXT NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        image_data BYTEA,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY("user") REFERENCES lccnet("user")
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS animation_activities (
-        id SERIAL PRIMARY KEY,
-        forum TEXT NOT NULL,
-        tags TEXT NOT NULL,
-        "user" TEXT NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        image_data BYTEA,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY("user") REFERENCES lccnet("name")
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS message_activities (
-        id SERIAL PRIMARY KEY,
-        tags TEXT NOT NULL,
-        "user" TEXT NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY("user") REFERENCES lccnet("user")
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS images (
-        id SERIAL PRIMARY KEY,
-        title TEXT,
-        url TEXT,
-        score TEXT,
-        popularity TEXT,
-        data BYTEA
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS acg_info (
-        id SERIAL PRIMARY KEY,
-        title TEXT,
-        url TEXT,
-        score TEXT,
-        popularity TEXT,
-        image BYTEA
-    )
-    ''')
-    conn.commit()
-    conn.close()
-initialize_db()
+
 
 @app.route('/reg', methods=['POST', 'GET'])
 def reg():
