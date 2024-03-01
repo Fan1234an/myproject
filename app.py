@@ -397,7 +397,6 @@ def initialize_db():
     )
     ''')
     conn.commit()
-    cursor.close()
     conn.close()
 initialize_db()
 
