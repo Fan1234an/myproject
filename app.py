@@ -28,14 +28,14 @@ def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
     mail.send(msg)
 
-def job_function():
-    with app.app_context():
-        main()
-        maina()
-scheduler = BackgroundScheduler()
-scheduler.add_job(job_function, 'interval', days=7)
-scheduler.start()
-job_function() # 開發測試用
+# def job_function():
+#     with app.app_context():
+#         main()
+#         maina()
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(job_function, 'interval', days=7)
+# scheduler.start()
+# job_function() # 開發測試用
 
 def get_db_connection():
     DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -500,4 +500,5 @@ if __name__ == '__main__':
         pass
     finally:
         # 當 Flask 應用退出時，關閉調度器
-        scheduler.shutdown()
+        pass
+        # scheduler.shutdown()
