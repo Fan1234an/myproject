@@ -8,6 +8,8 @@ from package.aa import main
 from package.bb import maina
 from apscheduler.schedulers.background import BackgroundScheduler
 import base64
+import psycopg2
+import urllib.parse as urlparse
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
@@ -250,55 +252,75 @@ def login():
     else:
         return render_template('signin.html')
 
-def initialize_db():  
-    with sqlite3.connect('account.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS lccnet (
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          user TEXT NOT NULL UNIQUE,
-                          passwd TEXT NOT NULL,
-                          name TEXT NOT NULL,
-                          email TEXT NOT NULL UNIQUE,
-                          confirmed INTEGER DEFAULT 0
-                        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS email_tokens (
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          user TEXT NOT NULL,
-                          token TEXT NOT NULL,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS user_activities (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            forum TEXT NOT NULL,
-                            tags TEXT NOT NULL,
-                            user TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            content TEXT NOT NULL,
-                            image_data BLOB,
-                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(user) REFERENCES lccnet(user)
-                            )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS animation_activities (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            forum TEXT NOT NULL,
-                            tags TEXT NOT NULL,
-                            user TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            content TEXT NOT NULL,
-                            image_data BLOB,
-                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(user) REFERENCES lccnet(user)
-                            )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS message_activities (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            tags TEXT NOT NULL,
-                            user TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            content TEXT NOT NULL,
-                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY(user) REFERENCES lccnet(user)
-                            )''')
-        conn.commit()
+def initialize_db():
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    urlparse.uses_netloc.append("postgres")
+    url = urlparse.urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS lccnet (
+        id SERIAL PRIMARY KEY,
+        user TEXT NOT NULL UNIQUE,
+        passwd TEXT NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        confirmed INTEGER DEFAULT 0
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS email_tokens (
+        id SERIAL PRIMARY KEY,
+        user TEXT NOT NULL,
+        token TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS user_activities (
+        id SERIAL PRIMARY KEY,
+        forum TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        user TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_data BYTEA,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user) REFERENCES lccnet(user)
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS animation_activities (
+        id SERIAL PRIMARY KEY,
+        forum TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        user TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_data BYTEA,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user) REFERENCES lccnet(user)
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS message_activities (
+        id SERIAL PRIMARY KEY,
+        tags TEXT NOT NULL,
+        user TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user) REFERENCES lccnet(user)
+    )
+    ''')
+    conn.commit()
+    cursor.close()
 initialize_db()
 
 @app.route('/reg', methods=['POST', 'GET'])
