@@ -84,7 +84,7 @@ def save_to_database(data):
     conn.close()
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
-BASE_URL = 'https://acg.gamer.com.tw/billboard.php?t=2&p=NS'
+BASE_URL = 'https://acg.gamer.com.tw/billboard.php?t=2&p=anime'
 
 def maina():
     data = scrape_and_download_images(BASE_URL, HEADERS)
