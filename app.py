@@ -44,7 +44,7 @@ oauth.register(
     redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
     client_kwargs={
         'scope': 'openid profile email',
-        'jwks_uri': 'https://api.line.me/oauth2/v2.1/certs'
+        'jwks_uri': 'https://www.googleapis.com/oauth2/v3/certs'
     },
 )
 
