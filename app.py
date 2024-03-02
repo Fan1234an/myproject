@@ -10,8 +10,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 import psycopg2
 import urllib.parse as urlparse
+from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
-
+oauth = OAuth(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -23,6 +24,19 @@ app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
 
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.secret_key)
+
+oauth.register(
+    'line',
+    client_id=app.config['LINE_CHANNEL_ID'],
+    client_secret=app.config['LINE_CHANNEL_SECRET'],
+    authorize_url='https://access.line.me/oauth2/v2.1/authorize',
+    authorize_params=None,
+    access_token_url='https://api.line.me/oauth2/v2.1/token',
+    access_token_params=None,
+    refresh_token_url=None,
+    redirect_uri=app.config['LINE_CALLBACK_URL'],
+    client_kwargs={'scope': 'openid profile email'},
+)
 
 def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
@@ -151,6 +165,51 @@ def execute_query(query):
         cursor.close()
         conn.close()
     return results
+
+@app.route('/login/line')
+def login_line():
+    # 重定向到LINE授權頁面
+    redirect_uri = url_for('authorize', _external=True)
+    return oauth.line.authorize_redirect(redirect_uri)
+
+@app.route('/authorize')
+def authorize():
+    # 獲取授權token
+    token = oauth.line.authorize_access_token()
+    # 使用token獲取用戶資訊
+    user_info = oauth.line.parse_id_token(token)
+    # 假设user_info字典中有line_id, name和email
+    line_id = user_info.get('sub')  # LINE用户的唯一标识符
+    name = user_info.get('name')
+    email = user_info.get('email')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM lccnet WHERE line_id = %s', (line_id,))
+    user = cursor.fetchone()
+
+    if user is None:
+        # 用户不存在，插入新记录
+        cursor.execute('INSERT INTO lccnet (user, passwd, name, email, line_id, confirmed) VALUES (%s, %s, %s, %s, %s, %s)',
+                       (line_id, 'default_password', name, email, line_id, 1))
+    else:
+        # 用户已存在，更新记录
+        cursor.execute('UPDATE lccnet SET name = %s, email = %s WHERE line_id = %s',
+                       (name, email, line_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    # 将用户信息保存到session
+    session['user_info'] = {
+        'line_id': line_id,
+        'name': name,
+        'email': email
+    }
+
+    # 然后重定向到主页或其他页面
+    return redirect(url_for('home'))
 
 @app.route("/post")
 def newpost():
@@ -282,7 +341,8 @@ def delete_post2(post_id):
     conn.close()
     flash("貼文刪除成功！")
     return redirect(url_for('home'))
-    
+
+# 首頁
 @app.route("/home")
 def home():
     if "user_info" in session:
