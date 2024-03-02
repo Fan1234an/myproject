@@ -17,6 +17,7 @@ print('LINE_CALLBACK_URL:', os.environ.get('LINE_CALLBACK_URL'))
 print(os.environ)
 
 app = Flask(__name__)
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 oauth = OAuth(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -26,6 +27,7 @@ app.config['MAIL_PASSWORD'] = 'kjotvuhfsxdjqxcx'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
+
 
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.secret_key)
