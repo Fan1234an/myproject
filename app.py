@@ -34,6 +34,10 @@ s = URLSafeTimedSerializer(app.secret_key)
 
 oauth.register(
     'line',
+    client_kwargs={
+        'scope': 'openid profile email',
+        'jwks_uri': 'https://login.windows.net/common/discovery/keys'  # 实际的 JWK 端点 URL
+    },
     client_id=os.environ.get('LINE_CHANNEL_ID'),
     client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
     authorize_url='https://access.line.me/oauth2/v2.1/authorize',
@@ -68,6 +72,7 @@ def initialize_db():
         passwd TEXT NOT NULL,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
+        line_id TEXT UNIQUE,
         confirmed INTEGER DEFAULT 0
     )
     ''')
