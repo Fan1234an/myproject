@@ -177,7 +177,7 @@ def execute_query(query):
 def login_line():
     # 重定向到LINE授權頁面
     redirect_uri = url_for('authorize', _external=True)
-    print("Redirect URI:", redirect_uri)
+    print("Generated redirect URI:", redirect_uri) 
     return oauth.line.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
