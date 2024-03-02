@@ -176,8 +176,9 @@ def execute_query(query):
 @app.route('/login/line')
 def login_line():
     # 重定向到LINE授權頁面
-    redirect_uri = url_for('authorize', _external=True)
-    print("Generated redirect URI:", redirect_uri) 
+    redirect_uri = 'https://new-flask-eded5275db73.herokuapp.com/authorize'
+    # redirect_uri = url_for('authorize', _external=True)
+    # print("Generated redirect URI:", redirect_uri) 
     return oauth.line.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
