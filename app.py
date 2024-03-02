@@ -34,10 +34,6 @@ s = URLSafeTimedSerializer(app.secret_key)
 
 oauth.register(
     'line',
-    client_kwargs={
-        'scope': 'openid profile email',
-        'jwks_uri': 'https://login.windows.net/common/discovery/keys'  # 实际的 JWK 端点 URL
-    },
     client_id=os.environ.get('LINE_CHANNEL_ID'),
     client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
     authorize_url='https://access.line.me/oauth2/v2.1/authorize',
@@ -47,6 +43,10 @@ oauth.register(
     refresh_token_url=None,
     redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
     client_kwargs={'scope': 'openid profile email'},
+    client_kwargs={
+        'scope': 'openid profile email',
+        'jwks_uri': 'https://api.line.me/oauth2/v2.1/certs'  # Replace with actual LINE jwks_uri
+    },
 )
 
 def send_email(to, subject, body):
