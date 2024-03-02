@@ -11,6 +11,11 @@ import base64
 import psycopg2
 import urllib.parse as urlparse
 from authlib.integrations.flask_client import OAuth
+print('LINE_CHANNEL_ID:', os.environ.get('LINE_CHANNEL_ID'))
+print('LINE_CHANNEL_SECRET:', os.environ.get('LINE_CHANNEL_SECRET'))
+print('LINE_CALLBACK_URL:', os.environ.get('LINE_CALLBACK_URL'))
+print(os.environ)
+
 app = Flask(__name__)
 oauth = OAuth(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
