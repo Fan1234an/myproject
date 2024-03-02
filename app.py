@@ -189,7 +189,7 @@ def submit_post():
             conn=get_db_connection()
             cursor = conn.cursor()
             # 根据图片ID查询数据
-            cursor.execute("SELECT data FROM images WHERE id = ?", (forum,))
+            cursor.execute("SELECT data FROM images WHERE id = %s", (forum,))
             image_data = cursor.fetchone()
             cursor.close()
             conn.close()
