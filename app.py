@@ -32,14 +32,14 @@ s = URLSafeTimedSerializer(app.secret_key)
 
 oauth.register(
     'line',
-    client_id=app.config['LINE_CHANNEL_ID'],
-    client_secret=app.config['LINE_CHANNEL_SECRET'],
+    client_id=os.environ.get('LINE_CHANNEL_ID'),
+    client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
     authorize_url='https://access.line.me/oauth2/v2.1/authorize',
     authorize_params=None,
     access_token_url='https://api.line.me/oauth2/v2.1/token',
     access_token_params=None,
     refresh_token_url=None,
-    redirect_uri=app.config['LINE_CALLBACK_URL'],
+    redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
     client_kwargs={'scope': 'openid profile email'},
 )
 
