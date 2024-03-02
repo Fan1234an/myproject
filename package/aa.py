@@ -1,103 +1,62 @@
-import sqlite3
-import os
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import requests
-from selenium.webdriver.chrome.service import Service
 import psycopg2
 import urllib.parse as urlparse
-chrome_options = webdriver.ChromeOptions()
-chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-chrome_options.add_argument("--headless") #無頭模式
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--no-sandbox")
+import os
+from bs4 import BeautifulSoup
+import urllib.request as req
 
+# 抓取標題.連結.圖片二進制.評分.人氣
+def scrape_and_download_images(base_url, headers):
+    response = requests.get(base_url, headers=headers)
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
-driver = webdriver.Chrome(service=service, options=chrome_options)
+    elements = soup.select('div.ACG-mainbox2 h1 a:not(:nth-of-type(2))')[:6]
+    image_elements = soup.select('div.ACG-mainbox2B a img')[:6]
+    scores, popularity = Score_Popularity_Switch()
+    data = []
+    for idx, (element, image_element) in enumerate(zip(elements, image_elements)):
+        title = element.text.strip()
+        link = element['href']
+        image_url = image_element['src']
+        if not image_url.startswith('http'):
+            image_url = 'https:' + image_url
 
-# 抓前六個標題與連結，並下載圖片
-def DiscussionForum1():
+        # 使用requests下载图片并获取二进制内容
+        image_response = requests.get(image_url)
+        image_content = image_response.content
 
-    driver.get('https://acg.gamer.com.tw/billboard.php?t=2&p=NS')  
+        # 使用索引获取对应的评分和人气值
+        score = scores[idx] if idx < len(scores) else 'N/A'
+        pop = popularity[idx] if idx < len(popularity) else 'N/A'
 
-    result = []
-    image_paths = []
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    image_folder = os.path.join(base_dir, 'static', 'PC')
-    
-    if not os.path.exists(image_folder):
-        os.makedirs(image_folder)
-    
-    try:
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainbox1'))
-        )
-        elements = driver.find_elements(By.CLASS_NAME, 'ACG-mainbox1')[:6]  
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainbox2B'))
-        )
-        images = driver.find_elements(By.CLASS_NAME, 'ACG-mainbox2B')[:6]  
-
-        scores, popularities = Score_Popularity_Switch()
-
-        for index, (element, image) in enumerate(zip(elements, images), start=1):
-            title = element.find_element(By.TAG_NAME, 'a').text
-            href = element.find_element(By.TAG_NAME, 'a').get_attribute('href')
-            score = scores[index-1]
-            popularity = popularities[index-1]
-            img = image.find_element(By.TAG_NAME, 'img')
-            src = img.get_attribute('src')
-            if not src.startswith('http'):
-                src = 'https:' + src
-
-            response = requests.get(src)
-            if response.status_code == 200:
-                image_name = f'image_{href.split("=")[-1]}.jpg'
-                image_path = os.path.join(image_folder, image_name)
-                with open(image_path, 'wb') as file:
-                    file.write(response.content)
-                image_paths.append(image_path)
-            
-            result.append((title, href, image_path, score, popularity)) 
-    except Exception as e:
-        print(f'出錯: {e}')
-    finally:
-        driver.quit()  
-    return result
+        # 将数据添加到列表中
+        data.append((title, link, image_content, score, pop))
+    return data
 
 def Score_Popularity_Switch():
+    url = 'https://acg.gamer.com.tw/billboard.php?t=2&p=NS'
+    request = req.Request(url, headers={
+        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        })
     
-    driver.get('https://acg.gamer.com.tw/billboard.php?t=2&p=NS')  
-
-    Scores = [] 
-    popularity = [] 
+    Scores = []
+    Popularity =[]
     try:
-        #先抓評分
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainbox4'))
-        )
-        elements = driver.find_elements(By.CLASS_NAME, 'ACG-mainbox4') 
-        for element in elements[:6]:  
-            all = element.find_element(By.TAG_NAME, 'p') 
-            text = all.text
-            Scores.append(text.replace('\n', ''))  
-        
-        #再抓人氣
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, 'ACG-mainplay'))
-        )
-        elements = driver.find_elements(By.CLASS_NAME, 'ACG-mainplay')    
-        for element in elements[:6]:  
-            text = element.text
-            popularity.append(text.replace('\n', ''))  
+        with req.urlopen(request) as response:
+            data = response.read().decode("utf-8")
+            root = BeautifulSoup(data, "html.parser")
+            elements = root.select('p.ACG-mainplay')[:6]
+            for element in elements:
+                    pop = element.text.strip()
+                    Popularity.append((pop)) #人氣
+
+            elements = root.select('p.ACG-mainboxpoint')[:6]
+            for element in elements:
+                    score = element.text.strip()
+                    Scores.append((score)) #評分
+            return Scores,Popularity
     except Exception as e:
-        print(f'出錯: {e}')
-    finally:
-        driver.quit()  
-    return Scores,popularity
+        print(f'Error occurred: {e}')
 
 # 儲存資料到資料庫
 def save_to_database(data):
@@ -116,18 +75,21 @@ def save_to_database(data):
     cursor.execute('DELETE FROM images')
 
     # 遍歷數據，將每條數據存儲到資料庫
-    for title, url, image_path, score, popularity in data:
-        with open(image_path, 'rb') as file:
-            image_data = file.read()
-            cursor.execute('INSERT INTO images (title, url, score, popularity, data) VALUES (%s, %s, %s, %s, %s)', 
-                           (title, url, score, popularity, image_data))
+    for title, url, image_content, score, pop in data:
+        insert_query = """
+        INSERT INTO images (title, url, score, popularity, data) VALUES (%s, %s, %s, %s, %s);
+        """
+        cursor.execute(insert_query, (title, url, score, pop, image_content))
     # 提交變更並關閉資料庫連接
     conn.commit()
     cursor.close()
     conn.close()
-    
+
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+BASE_URL = 'https://acg.gamer.com.tw/billboard.php?t=2&p=NS'
+
 def main():
-    data = DiscussionForum1()
+    data = scrape_and_download_images(BASE_URL, HEADERS)
     save_to_database(data)
 
 if __name__ == "__main__":
