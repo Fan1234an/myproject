@@ -10,6 +10,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 import psycopg2
 import urllib.parse as urlparse
+from urllib.parse import urlencode
 from flask import Flask, redirect, url_for
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client.apps import FlaskAppMixin
