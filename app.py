@@ -41,7 +41,7 @@ line_blueprint = OAuth2ConsumerBlueprint(
     token_url="https://api.line.me/oauth2/v2.1/token",
     authorization_url="https://access.line.me/oauth2/v2.1/authorize",
     redirect_to='authorize',
-    redirect_uri=os.environ.get('LINE_CALLBACK_URL')
+    redirect_uri="https://new-flask-eded5275db73.herokuapp.com/authorize"
 )
 
 app.register_blueprint(line_blueprint, url_prefix="/login")
