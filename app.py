@@ -12,6 +12,7 @@ import psycopg2
 import urllib.parse as urlparse
 from authlib.integrations.flask_client import OAuth
 from flask_dance.consumer import OAuth2ConsumerBlueprint
+
 print('LINE_CHANNEL_ID:', os.environ.get('LINE_CHANNEL_ID'))
 print('LINE_CHANNEL_SECRET:', os.environ.get('LINE_CHANNEL_SECRET'))
 print('LINE_CALLBACK_URL:', os.environ.get('LINE_CALLBACK_URL'))
@@ -19,21 +20,20 @@ print(os.environ)
 
 app = Flask(__name__)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
-# oauth = OAuth(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
+oauth = OAuth(app)
+# line_blueprint = OAuth2ConsumerBlueprint(
+#     "line", __name__,
+#     client_id=os.environ.get('LINE_CHANNEL_ID'),
+#     client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
+#     base_url="https://api.line.me",
+#     token_url="https://api.line.me/oauth2/v2.1/token",
+#     authorization_url="https://access.line.me/oauth2/v2.1/authorize",
+#     redirect_to='authorize',
+#     redirect_uri="https://new-flask-eded5275db73.herokuapp.com/login/line/authorize"
+# )
 
-line_blueprint = OAuth2ConsumerBlueprint(
-    "line", __name__,
-    client_id=os.environ.get('LINE_CHANNEL_ID'),
-    client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
-    base_url="https://api.line.me",
-    token_url="https://api.line.me/oauth2/v2.1/token",
-    authorization_url="https://access.line.me/oauth2/v2.1/authorize",
-    redirect_to='authorize',
-    redirect_uri="https://new-flask-eded5275db73.herokuapp.com/login/line/authorize"
-)
-
-app.register_blueprint(line_blueprint, url_prefix="/login")
+# app.register_blueprint(line_blueprint, url_prefix="/login")
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -43,12 +43,18 @@ app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
 
-
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.secret_key)
 
-
-
+oauth.register(
+    'line',
+    client_id=os.environ.get('LINE_CHANNEL_ID'),
+    client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
+    authorize_url='https://access.line.me/oauth2/v2.1/authorize',
+    access_token_url='https://api.line.me/oauth2/v2.1/token',
+    redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
+    client_kwargs={'scope': 'openid profile email'},
+)
 
 def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
@@ -181,30 +187,16 @@ def execute_query(query):
 
 @app.route('/login/line')
 def login_line():
-    print("DEBUG: login_line function called.")
-    print("LINE_CHANNEL_ID from env:", os.environ.get("LINE_CHANNEL_ID"))
-    print("LINE_CHANNEL_SECRET from env:", os.environ.get("LINE_CHANNEL_SECRET"))
-    print("LINE_CALLBACK_URL from env:", os.environ.get("LINE_CALLBACK_URL"))
-
-    if not line_blueprint.session.authorized:
-        print("DEBUG: Not authorized, redirecting to line.login")
-        return redirect(url_for('line.login'))
-    print("DEBUG: Not authorized, redirecting to line.login")
-    return redirect(url_for('line.authorize'))
+    redirect_uri = "https://new-flask-eded5275db73.herokuapp.com/authorize"
+    return oauth.line.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
 def authorize():
-    if not line_blueprint.session.authorized:
-        return redirect(url_for('line.login'))
-    # 这里获取 access_token
-    resp = line_blueprint.session.get("/v2/profile")
-
-    if resp.ok:
-        user_info = resp.json()
-        line_id = user_info['userId']
-        name = user_info['displayName']
-        email = user_info.get('email', '')  # LINE 不一定提供 email
-
+    token = oauth.line.authorize_access_token()
+    user_info = oauth.line.parse_id_token(token)
+    line_id=user_info.get('sub')
+    name=user_info.get('name')
+    email=user_info.get('email')
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -365,7 +357,7 @@ def delete_post2(post_id):
     flash("貼文刪除成功！")
     return redirect(url_for('home'))
 
-# 首頁
+# 首頁  
 @app.route("/home")
 def home():
     if "user_info" in session:
@@ -582,5 +574,4 @@ if __name__ == '__main__':
         pass
     finally:
         # 當 Flask 應用退出時，關閉調度器
-        pass
-        # scheduler.shutdown()
+        scheduler.shutdown()
