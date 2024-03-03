@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, redirect, url_for, request, render_template, flash, session
+from flask import Flask, redirect, url_for, request, render_template, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Mail, Message
@@ -10,7 +10,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 import psycopg2
 import urllib.parse as urlparse
+from flask import Flask, redirect, url_for
 from authlib.integrations.flask_client import OAuth
+from authlib.integrations.flask_client.apps import FlaskAppMixin
 from flask_dance.consumer import OAuth2ConsumerBlueprint
 
 print('LINE_CHANNEL_ID:', os.environ.get('LINE_CHANNEL_ID'))
@@ -190,9 +192,27 @@ def execute_query(query):
 
 @app.route('/login/line')
 def login_line():
-    redirect_uri = "https://new-flask-eded5275db73.herokuapp.com/authorize"
-    return oauth.line.authorize_redirect(redirect_uri)
-
+    # 获取Line客户端实例
+    line = oauth.create_client('line')
+    # 构建授权URL
+    redirect_uri = url_for('authorize', _external=True)
+    # 生成state，用于防止CSRF攻击
+    state = session.get('state', '随机生成的状态值，确保每次请求都是唯一的')
+    # 构建授权URL
+    params = {
+        'client_id': line.client_id,
+        'response_type': 'code',
+        'redirect_uri': redirect_uri,
+        'scope': 'openid profile email',
+        'state': state
+    }
+    # 将参数编码到URL中
+    url = f"{line.authorize_url}?{urlencode(params)}"
+    # 将state存入session
+    session['state'] = state
+    # 重定向到Line授权页面
+    return redirect(url)
+    
 @app.route('/authorize')
 def authorize():
     token = oauth.line.authorize_access_token()
