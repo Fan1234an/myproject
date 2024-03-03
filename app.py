@@ -21,17 +21,6 @@ app = Flask(__name__)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 # oauth = OAuth(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
-app.config['MAIL_SERVER']='smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'asd31564616@gmail.com'
-app.config['MAIL_PASSWORD'] = 'kjotvuhfsxdjqxcx'
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
-
-
-mail = Mail(app)
-s = URLSafeTimedSerializer(app.secret_key)
 
 line_blueprint = OAuth2ConsumerBlueprint(
     "line", __name__,
@@ -45,6 +34,20 @@ line_blueprint = OAuth2ConsumerBlueprint(
 )
 
 app.register_blueprint(line_blueprint, url_prefix="/login")
+
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'asd31564616@gmail.com'
+app.config['MAIL_PASSWORD'] = 'kjotvuhfsxdjqxcx'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
+
+
+mail = Mail(app)
+s = URLSafeTimedSerializer(app.secret_key)
+
+
 
 
 def send_email(to, subject, body):
