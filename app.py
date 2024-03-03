@@ -178,6 +178,10 @@ def execute_query(query):
 
 @app.route('/login/line')
 def login_line():
+    print("LINE_CHANNEL_ID from env:", os.environ.get("LINE_CHANNEL_ID"))
+    print("LINE_CHANNEL_SECRET from env:", os.environ.get("LINE_CHANNEL_SECRET"))
+    print("LINE_CALLBACK_URL from env:", os.environ.get("LINE_CALLBACK_URL"))
+
     if not line_blueprint.session.authorized:
         return redirect(url_for('line.login'))
     return redirect(url_for('line.authorize'))
