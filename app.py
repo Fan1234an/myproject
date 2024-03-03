@@ -53,7 +53,10 @@ oauth.register(
     authorize_url='https://access.line.me/oauth2/v2.1/authorize',
     access_token_url='https://api.line.me/oauth2/v2.1/token',
     redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
-    client_kwargs={'scope': 'openid profile email'},
+    client_kwargs={
+        'scope': 'openid profile email',
+        'jwks_uri': 'https://api.line.me/oauth2/v2.1/certs'
+    }
 )
 
 def send_email(to, subject, body):
