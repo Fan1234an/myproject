@@ -10,11 +10,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 import psycopg2
 import urllib.parse as urlparse
-from urllib.parse import urlencode
-from flask import Flask, redirect, url_for
-from authlib.integrations.flask_client import OAuth
-from authlib.integrations.flask_client.apps import FlaskAppMixin
-from flask_dance.consumer import OAuth2ConsumerBlueprint
+# from urllib.parse import urlencode
+# from authlib.integrations.flask_client import OAuth
+# from authlib.integrations.flask_client.apps import FlaskAppMixin
+# from flask_dance.consumer import OAuth2ConsumerBlueprint
 
 print('LINE_CHANNEL_ID:', os.environ.get('LINE_CHANNEL_ID'))
 print('LINE_CHANNEL_SECRET:', os.environ.get('LINE_CHANNEL_SECRET'))
@@ -24,19 +23,7 @@ print(os.environ)
 app = Flask(__name__)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key')
-oauth = OAuth(app)
-# line_blueprint = OAuth2ConsumerBlueprint(
-#     "line", __name__,
-#     client_id=os.environ.get('LINE_CHANNEL_ID'),
-#     client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
-#     base_url="https://api.line.me",
-#     token_url="https://api.line.me/oauth2/v2.1/token",
-#     authorization_url="https://access.line.me/oauth2/v2.1/authorize",
-#     redirect_to='authorize',
-#     redirect_uri="https://new-flask-eded5275db73.herokuapp.com/login/line/authorize"
-# )
-
-# app.register_blueprint(line_blueprint, url_prefix="/login")
+# oauth = OAuth(app)
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -49,18 +36,17 @@ app.config['MAIL_DEFAULT_SENDER'] = 'asd31564616@gmail.com'
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.secret_key)
 
-oauth.register(
-    'line',
-    client_id=os.environ.get('LINE_CHANNEL_ID'),
-    client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
-    authorize_url='https://access.line.me/oauth2/v2.1/authorize',
-    access_token_url='https://api.line.me/oauth2/v2.1/token',
-    redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
-    client_kwargs={
-        'scope': 'openid profile email',
-        'jwks_uri': 'https://api.line.me/oauth2/v2.1/certs'
-    }
-)
+# oauth.register(
+#     'line',
+#     client_id=os.environ.get('LINE_CHANNEL_ID'),
+#     client_secret=os.environ.get('LINE_CHANNEL_SECRET'),
+#     authorize_url='https://access.line.me/oauth2/v2.1/authorize',
+#     access_token_url='https://api.line.me/oauth2/v2.1/token',
+#     redirect_uri=os.environ.get('LINE_CALLBACK_URL'),
+#     client_kwargs={
+#         'scope': 'openid profile email'
+#     }
+# )
 
 def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
@@ -191,64 +177,74 @@ def execute_query(query):
         conn.close()
     return results
 
-@app.route('/login/line')
-def login_line():
-    # 获取Line客户端实例
-    line = oauth.create_client('line')
-    # 构建授权URL
-    redirect_uri = url_for('authorize', _external=True)
-    # 生成state，用于防止CSRF攻击
-    state = session.get('state', '随机生成的状态值，确保每次请求都是唯一的')
-    # 构建授权URL
-    params = {
-        'client_id': line.client_id,
-        'response_type': 'code',
-        'redirect_uri': redirect_uri,
-        'scope': 'openid profile email',
-        'state': state
-    }
-    # 将参数编码到URL中
-    url = f"{line.authorize_url}?{urlencode(params)}"
-    # 将state存入session
-    session['state'] = state
-    # 重定向到Line授权页面
-    return redirect(url)
+# @app.route('/login/line')
+# def login_line():
+#     line = oauth.create_client('line')  # 创建LINE OAuth客户端实例
+#     redirect_uri = url_for('authorize', _external=True)
+
+#     # 从line客户端实例获取client_id和authorize_url
+#     client_id = line.client_id
+#     authorize_url = line.authorize_url
+
+#     # 创建state值
+#     state = session.get('state', '您需要生成的随机状态值')
+
+#     # 构建查询参数
+#     params = {
+#         'client_id': client_id,
+#         'response_type': 'code',
+#         'redirect_uri': redirect_uri,
+#         'scope': 'openid profile email',
+#         'state': state
+#     }
+
+#     # 将查询参数编码为URL查询字符串
+#     query_string = urlencode(params)
+
+#     # 构建完整的授权URL
+#     url = f"{authorize_url}?{query_string}"
+
+#     # 将state保存在session中以供回调时验证
+#     session['state'] = state
+
+#     # 重定向到LINE的授权页面
+#     return redirect(url)
     
-@app.route('/authorize')
-def authorize():
-    token = oauth.line.authorize_access_token()
-    user_info = oauth.line.parse_id_token(token)
-    line_id=user_info.get('sub')
-    name=user_info.get('name')
-    email=user_info.get('email')
+# @app.route('/authorize')
+# def authorize():
+#     token = oauth.line.authorize_access_token()
+#     user_info = oauth.line.parse_id_token(token)
+#     line_id=user_info.get('sub')
+#     name=user_info.get('name')
+#     email=user_info.get('email')
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM lccnet WHERE line_id = %s', (line_id,))
-    user = cursor.fetchone()
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute('SELECT * FROM lccnet WHERE line_id = %s', (line_id,))
+#     user = cursor.fetchone()
 
-    if user is None:
-        # 用户不存在，插入新记录
-        cursor.execute('INSERT INTO lccnet (user, passwd, name, email, line_id, confirmed) VALUES (%s, %s, %s, %s, %s, %s)',
-                       (line_id, 'default_password', name, email, line_id, 1))
-    else:
-        # 用户已存在，更新记录
-        cursor.execute('UPDATE lccnet SET name = %s, email = %s WHERE line_id = %s',
-                       (name, email, line_id))
+#     if user is None:
+#         # 用户不存在，插入新记录
+#         cursor.execute('INSERT INTO lccnet (user, passwd, name, email, line_id, confirmed) VALUES (%s, %s, %s, %s, %s, %s)',
+#                        (line_id, 'default_password', name, email, line_id, 1))
+#     else:
+#         # 用户已存在，更新记录
+#         cursor.execute('UPDATE lccnet SET name = %s, email = %s WHERE line_id = %s',
+#                        (name, email, line_id))
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
 
-    # 将用户信息保存到session
-    session['user_info'] = {
-        'line_id': line_id,
-        'name': name,
-        'email': email
-    }
+#     # 将用户信息保存到session
+#     session['user_info'] = {
+#         'line_id': line_id,
+#         'name': name,
+#         'email': email
+#     }
 
-    # 然后重定向到主页或其他页面
-    return redirect(url_for('home'))
+#     # 然后重定向到主页或其他页面
+#     return redirect(url_for('home'))
 
 @app.route("/post")
 def newpost():
